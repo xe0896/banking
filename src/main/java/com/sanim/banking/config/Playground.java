@@ -32,6 +32,8 @@ public class Playground implements CommandLineRunner {
                 .displayName("Alice")
                 .build());
 
+        System.out.println("UserID: " + user.getId());
+
         var acc = accounts.openAccount(user.getId(),
                 AccountType.CHECKING, "GBP");
 
@@ -43,5 +45,7 @@ public class Playground implements CommandLineRunner {
         transactions.withdraw(acc.getId(), Money.of("123.00", "GBP"), user.getId(), "idom-4");
 
         System.out.println("balance: " + accounts.getBalance(acc.getId()));
+
+
     }
 }

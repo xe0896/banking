@@ -25,6 +25,7 @@ import static com.sanim.banking.config.SystemAccountNumbers.getUUIDSystemId;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TransactionService {
     private final TransactionRepository transactions;
     private final AccountRepository accounts;
@@ -79,12 +80,22 @@ public class TransactionService {
         return transaction;
     }
 
+    // Transactional also earns its stripes from threads, this is because if we was to hand a lock
+    // to a thread then it would hold it until it commits, given that it is called in a @Transactional
+    // method then it knows it will commit so it would wait until that happens, when it does happen then
+    // it would release the lock allowing the blocked threads to continue
     @Transactional
     public Transaction withdraw(UUID accountId, Money amount, UUID userId, String idempotencyKey) {
         Optional<Transaction> collision = transactions.findByIdempotencyKeyAndInitiatedByUserId(idempotencyKey, userId);
         if(collision.isPresent()) return collision.get();
 
-        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Cannot find account"));
+        // findWithlockById gives the thread the lock
+        System.out.println(accountId);
+        System.out.println(Thread.currentThread().getName());
+        Account account = accounts.findWithLockById(accountId).orElseThrow(() -> new AccountNotFoundException("Cannot find account"));
+        System.out.println("SOMEHOW PASSED");
+        System.out.println(idempotencyKey);
+        System.out.println(accountId);
 
         if(account.getStatus() == AccountStatus.CLOSED) throw new AccountClosedException("Account is closed");
 
@@ -93,6 +104,7 @@ public class TransactionService {
         if(!account.getCurrencyCode().equals(amount.currency().getCurrencyCode())) throw new CurrencyMismatchException("Currencies do not match");
 
         Money balance = accountService.getBalance(accountId);
+        System.out.println("London: " + balance.amount());
         Money diff = balance.subtract(amount);
 
         if(diff.isNegative()) throw new
@@ -136,7 +148,60 @@ public class TransactionService {
     public Transaction transfer(UUID fromAccountId, UUID toAccountId, Money amount, UUID userId, String idempotencyKey) {
         // The userId is owned by the destination so from account
         Optional<Transaction> collision = transactions.findByIdempotencyKeyAndInitiatedByUserId(idempotencyKey, userId);
-        if(collision.isPresent()) return collision.get();
+        if (collision.isPresent()) return collision.get();
 
+        Account fromAccount = accounts.findWithLockById(fromAccountId).orElseThrow(() -> new AccountNotFoundException("Cannot find 'from' account"));
+        Account toAccount = accounts.findWithLockById(toAccountId).orElseThrow(() -> new AccountNotFoundException("Cannot find 'to' account"));
+
+        if (fromAccount.getStatus() == AccountStatus.CLOSED)
+            throw new AccountClosedException("'From' account is closed");
+        if (toAccount.getStatus() == AccountStatus.CLOSED) throw new AccountClosedException("'To' account is closed");
+
+        if (fromAccount.getStatus() == AccountStatus.FROZEN)
+            throw new AccountFrozenException("'From' account is frozen");
+        if (toAccount.getStatus() == AccountStatus.FROZEN) throw new AccountFrozenException("'To' account is frozen");
+
+        if (!fromAccount.getCurrencyCode().equals(amount.currency().getCurrencyCode()))
+            throw new CurrencyMismatchException("'From' currencies do not match");
+        if (!toAccount.getCurrencyCode().equals(amount.currency().getCurrencyCode()))
+            throw new CurrencyMismatchException("'To' currencies do not match");
+
+        Money fromAccountBalance = accountService.getBalance(fromAccountId);
+
+        Money diff = fromAccountBalance.subtract(amount);
+
+        if (diff.isNegative()) throw new
+                InsufficientFundsException("Not enough money to withdraw: balance: " + fromAccountBalance.amount() + " tried to withdraw: " + amount.amount());
+
+        Transaction transaction = Transaction.builder().
+                idempotencyKey(idempotencyKey).
+                type(TransactionType.TRANSFER).
+                initiatedByUserId(userId).
+                build();
+
+        transaction = transactions.save(transaction);
+
+        LedgerEntry fromEntry = LedgerEntry
+                .builder().
+                transactionId(transaction.getId()).
+                accountId(fromAccountId).
+                amount(amount.amount().negate()).
+                currencyCode(amount.currency().getCurrencyCode()).build();
+
+        LedgerEntry toEntry = LedgerEntry.builder().
+                transactionId(transaction.getId()).
+                accountId(toAccountId).
+                amount(amount.amount()).
+                currencyCode(amount.currency().getCurrencyCode()).build();
+
+        ledger.save(toEntry);
+        ledger.save(fromEntry);
+
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setCompletedAt(Instant.now());
+
+        // Hibernate automatically auto-commits the transaction change so the statements above
+        // would actually change the data in the DB
+        return transaction;
     }
 }

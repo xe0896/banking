@@ -2,7 +2,9 @@ package com.sanim.banking.repository;
 
 import com.sanim.banking.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
@@ -16,4 +18,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // The findBy prefix suggest a query derivation from Spring meaning it would do a SELECT statement
     // findByEmail(String) → SELECT * FROM users WHERE email = ?
     Optional<User> findByEmail(String email);
+
+    // Optional not required since its the same thing as the list being empty when it returns nothing, i.e null
+    @Query("select u.email from User u")
+    List<String> getAllEmails();
 }
