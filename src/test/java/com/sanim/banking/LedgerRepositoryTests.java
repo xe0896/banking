@@ -2,6 +2,7 @@ package com.sanim.banking;
 
 import com.sanim.banking.domain.ledger.LedgerEntry;
 import com.sanim.banking.repository.LedgerEntryRepository;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest // forgot
+@Transactional
 class LedgerRepositoryTests {
     @Autowired
     LedgerEntryRepository ledger;

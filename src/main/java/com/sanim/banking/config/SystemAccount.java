@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(1) // Should be done first before the bootstrap of starting to use repositories, the init of repo's is done before
 @RequiredArgsConstructor
-public class SystemAccountInitialiser implements CommandLineRunner {
+public class SystemAccount implements CommandLineRunner {
 
     private final AccountRepository accounts;
 

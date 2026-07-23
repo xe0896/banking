@@ -5,11 +5,14 @@ import com.sanim.banking.domain.account.Account;
 import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.user.User;
 import com.sanim.banking.exception.InsufficientFundsException;
+import com.sanim.banking.repository.AccountRepository;
 import com.sanim.banking.repository.LedgerEntryRepository;
 import com.sanim.banking.repository.TransactionRepository;
 import com.sanim.banking.repository.UserRepository;
 import com.sanim.banking.service.AccountService;
 import com.sanim.banking.service.TransactionService;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +38,8 @@ public class ConcurrencyTests {
     TransactionService transactionService;
     @Autowired
     LedgerEntryRepository ledger;
+    @Autowired
+    AccountRepository accountsRepo;
 
     // No transactional since as we save the before commit measures would store in cache rather than
     // actual DB so the threads won't be able to find the account if we was to let it in cache,
@@ -65,7 +70,7 @@ public class ConcurrencyTests {
             UUID userId = u.getId();
             service.execute(() -> {
                     try {
-                        transactionService.withdraw(accountId,
+                        transactionService.withdraw(accountId, accountId,
                                 Money.of("20.00", "GBP"), userId, String.valueOf(UUID.randomUUID()));
 
                         succeeded.incrementAndGet();
@@ -87,5 +92,15 @@ public class ConcurrencyTests {
         assertEquals(Money.zero("GBP").amount(), ledger.sumWholeLedger());
         assertEquals(5, succeeded.get());
         assertEquals(5, failed.get());
+    }
+
+    @AfterEach
+    void cleanup() {
+        ledger.deleteAll();
+        transactions.deleteAll();
+        accountsRepo.findAll().stream()
+                .filter(a -> a.getOwnerUserId() != null)   // keep system accounts
+                .forEach(accountsRepo::delete);
+        users.deleteAll();
     }
 }

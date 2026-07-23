@@ -85,7 +85,11 @@ public class TransactionService {
     // method then it knows it will commit so it would wait until that happens, when it does happen then
     // it would release the lock allowing the blocked threads to continue
     @Transactional
-    public Transaction withdraw(UUID accountId, Money amount, UUID userId, String idempotencyKey) {
+    public Transaction withdraw(UUID accountId, UUID callerId, Money amount, UUID userId, String idempotencyKey) {
+        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("No such account"));
+        if(!account.getOwnerUserId().equals(callerId)) {
+            throw new ForbiddenException("Cannot freeze another persons account");
+        }
         Optional<Transaction> collision = transactions.findByIdempotencyKeyAndInitiatedByUserId(idempotencyKey, userId);
         if(collision.isPresent()) return collision.get();
 

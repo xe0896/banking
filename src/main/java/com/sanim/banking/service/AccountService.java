@@ -8,6 +8,7 @@ import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.user.User;
 import com.sanim.banking.domain.user.UserStatus;
 import com.sanim.banking.exception.AccountNotFoundException;
+import com.sanim.banking.exception.ForbiddenException;
 import com.sanim.banking.exception.UserNotActiveException;
 import com.sanim.banking.repository.AccountRepository;
 import com.sanim.banking.repository.LedgerEntryRepository;
@@ -61,5 +62,19 @@ public class AccountService {
         if(sum == null) return Money.zero(account.getCurrencyCode());
 
         return new Money(sum, Currency.getInstance(account.getCurrencyCode()));
+    }
+
+    @Transactional
+    public Account freeze(UUID accountId, UUID callerid) {
+        // A lot of controllers would need to catch this (we are being called by RestControllers here)
+        // so the idea is to make a default HTTP response, see GlobalExceptionHandler
+
+        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("No such account"));
+        if(!account.getOwnerUserId().equals(callerid)) {
+            throw new ForbiddenException("Cannot freeze another persons account");
+        }
+
+        account.setStatus(AccountStatus.FROZEN);
+        return account;
     }
 }

@@ -8,7 +8,10 @@ import com.sanim.banking.service.AccountService;
 import com.sanim.banking.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -20,8 +23,10 @@ public class TransactionController {
     // @RequestHeader("idom-key") would look at the header and find an idom-key entry, the reason
     // why it is in the header is because it is metadata
     @PostMapping("/withdraw/{id}")
-    ResponseEntity<TransactionResponse> withdraw(@RequestHeader("idom-key") String key, @RequestBody WithdrawRequest req) {
-        Transaction transaction = transactions.withdraw(req.accountId(), req.amount(), req.userId(), key);
+    ResponseEntity<TransactionResponse> withdraw(@PathVariable UUID id, @RequestHeader("idom-key") String key,
+                                                 @RequestBody WithdrawRequest req, Authentication auth) {
+        UUID callerId = UUID.fromString(auth.getName());
+        Transaction transaction = transactions.withdraw(req.accountId(), callerId, req.amount(), req.userId(), key);
         Money newBalance = accounts.getBalance(req.accountId());
         return ResponseEntity.status(201).body(toDto(transaction, newBalance));
     }

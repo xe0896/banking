@@ -91,6 +91,7 @@ public class TransactionRepositoryTests {
         transactionService.deposit(account.getId(), Money.of("200.00", currencyCode), userId, "idom-2");
 
         BigDecimal sum = ledger.sumWholeLedger();
+        System.out.println("Sum: " + sum);
         // Sum of ledger should always be zero since system account balances it out for deposits/withdrawls
         assertEquals(new BigDecimal("0.00"), sum);
     }
@@ -110,7 +111,7 @@ public class TransactionRepositoryTests {
 
         // 1st param is the exception class we expect
         // 2nd param is the arrow function that we want to execute that should throw the exception
-        assertThrows(InsufficientFundsException.class, () -> transactionService.withdraw(account.getId(),
+        assertThrows(InsufficientFundsException.class, () -> transactionService.withdraw(account.getId(), account.getId(),
                 Money.of("200.00", "GBP"), u.getId(), "idom-2"));
 
         assertEquals(prevCount, ledger.count());

@@ -2,6 +2,7 @@ package com.sanim.banking;
 
 import com.sanim.banking.domain.*;
 import com.sanim.banking.repository.LedgerEntryRepository;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -9,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
+@Transactional
 class BankingApplicationTests {
 
 	@Test

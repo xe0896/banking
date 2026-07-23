@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Currency;
 
+
 @Component
-@Profile("playground")            // only runs when this profile is active
-@Order(10)                        // after the seeder
+@Profile("playground") // only runs when this profile is active
+@Order(10) // after the seeder
 @RequiredArgsConstructor
 public class Playground implements CommandLineRunner {
-
     private final UserRepository users;
     private final AccountService accounts;
     private final TransactionService transactions;
@@ -41,11 +41,6 @@ public class Playground implements CommandLineRunner {
         transactions.deposit(acc.getId(), Money.of("100.00", "GBP"), user.getId(), "idom-1");
         transactions.deposit(acc.getId(), Money.of("200.00", "GBP"), user.getId(), "idom-2");
 
-        transactions.withdraw(acc.getId(), Money.of("150.00", "GBP"), user.getId(), "idom-3");
-        transactions.withdraw(acc.getId(), Money.of("123.00", "GBP"), user.getId(), "idom-4");
-
         System.out.println("balance: " + accounts.getBalance(acc.getId()));
-
-
     }
 }
