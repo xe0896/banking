@@ -86,7 +86,7 @@ public class TransactionService {
     // it would release the lock allowing the blocked threads to continue
     @Transactional
     public Transaction withdraw(UUID accountId, UUID callerId, Money amount, UUID userId, String idempotencyKey) {
-        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("No such account"));
+        Account account = accounts.findWithLockById(accountId).orElseThrow(() -> new AccountNotFoundException("Cannot find account"));
         if(!account.getOwnerUserId().equals(callerId)) {
             throw new ForbiddenException("Cannot freeze another persons account");
         }
@@ -96,7 +96,6 @@ public class TransactionService {
         // findWithlockById gives the thread the lock
         System.out.println(accountId);
         System.out.println(Thread.currentThread().getName());
-        Account account = accounts.findWithLockById(accountId).orElseThrow(() -> new AccountNotFoundException("Cannot find account"));
         System.out.println("SOMEHOW PASSED");
         System.out.println(idempotencyKey);
         System.out.println(accountId);

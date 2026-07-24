@@ -1,6 +1,7 @@
 package com.sanim.banking.service;
 
 import com.sanim.banking.domain.user.User;
+import com.sanim.banking.exception.IncorrectPasswordException;
 import com.sanim.banking.exception.UserNotActiveException;
 import com.sanim.banking.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -10,16 +11,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-import static com.sanim.banking.config.SecurityConfig.passwordEncoder;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class UserService {
     private final UserRepository users;
+    private final PasswordEncoder encoder; // A @Bean method, the object returned by the method is stored as a Bean
 
     public User createUser(String email, String password, String displayName) {
-        PasswordEncoder encoder = passwordEncoder();
         String passwordHash = encoder.encode(password);
         User u = User.builder().email(email).passwordHash(passwordHash).displayName(displayName).build();
         users.save(u);
@@ -32,5 +31,11 @@ public class UserService {
 
     public User getUserById(UUID id) throws UserNotActiveException {
         return users.findById(id).orElseThrow(() -> new UserNotActiveException("No such user"));
+    }
+
+    public User verifyUserViaEmail(String email, String password) throws UserNotActiveException, IncorrectPasswordException {
+        User u = getUserByEmail(email);
+        if(!encoder.matches(password, u.getPasswordHash())) throw new IncorrectPasswordException("Incorrect password");
+        return u;
     }
 }

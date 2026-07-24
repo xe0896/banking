@@ -6,6 +6,7 @@ import com.sanim.banking.dto.OpenAccountRequest;
 import com.sanim.banking.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class AccountController {
     // POST would give it data and it would do something with it, could also return what it created like it is now
     @PostMapping
     ResponseEntity<AccountResponse> open(@RequestBody OpenAccountRequest req) {
+        System.out.println("Open account reached");
         var acc = accounts.openAccount(req.userId(), req.type(), req.currencyCode());
         // AccountResponse is a record so Spring can parse it for us using its getters
         return ResponseEntity.status(201).body(new AccountResponse(
@@ -28,7 +30,7 @@ public class AccountController {
     }
 
     @PostMapping("/{id}/freeze")
-    ResponseEntity<AccountResponse> freeze(@PathVariable UUID id) {
+    ResponseEntity<AccountResponse> freeze(@PathVariable UUID id, Authentication auth) {
         return null;
     }
 

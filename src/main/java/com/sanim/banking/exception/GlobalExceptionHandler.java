@@ -1,6 +1,6 @@
 package com.sanim.banking.exception;
-
 import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import com.sanim.banking.exception.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static com.sanim.banking.config.SecurityConfig.passwordEncoder;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -18,6 +17,8 @@ class UserRepositoryTests {
     // Tells to inject a UserRepository into the tests
     @Autowired
     UserRepository users;
+    @Autowired
+    PasswordEncoder encoder;
 
     @Test
     void findByEmailTest() {
@@ -33,7 +34,6 @@ class UserRepositoryTests {
     @Test
     void checkPasswordHash() {
         String password = "samsung123";
-        PasswordEncoder encoder = passwordEncoder();
         String actualHash = encoder.encode(password);
         String wrongHash = encoder.encode("rubbish");
 
