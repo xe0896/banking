@@ -7,6 +7,7 @@ import com.sanim.banking.domain.account.AccountStatus;
 import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.user.User;
 import com.sanim.banking.domain.user.UserStatus;
+import com.sanim.banking.enums.CurrencyCode;
 import com.sanim.banking.exception.AccountNotFoundException;
 import com.sanim.banking.exception.ForbiddenException;
 import com.sanim.banking.exception.UserNotActiveException;
@@ -36,7 +37,7 @@ public class AccountService {
     // may have some success but then one eventually fails, and we want to roll back. That is what transactional does
     // that is why it is required in the test-cases so that it can rollback
     @Transactional
-    public Account openAccount(UUID id, AccountType type, String currency) {
+    public Account openAccount(UUID id, AccountType type, CurrencyCode currency) {
         // Given for free by CrudRepository: Optional<T> findById(ID id), ensures that the user exists
         // before we create an account
         User user = users.findById(id).orElseThrow(() -> new UserNotActiveException("No such user"));
@@ -61,7 +62,7 @@ public class AccountService {
         BigDecimal sum = ledger.sumByAccountId(accountId);
         if(sum == null) return Money.zero(account.getCurrencyCode());
 
-        return new Money(sum, Currency.getInstance(account.getCurrencyCode()));
+        return new Money(sum, account.getCurrencyCode());
     }
 
     @Transactional
@@ -75,6 +76,28 @@ public class AccountService {
         }
 
         account.setStatus(AccountStatus.FROZEN);
+        return account;
+    }
+
+    @Transactional
+    public Account unfreeze(UUID accountId, UUID callerid) {
+        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("No such account"));
+        if(!account.getOwnerUserId().equals(callerid)) {
+            throw new ForbiddenException("Cannot unfreeze another persons account");
+        }
+
+        account.setStatus(AccountStatus.OPEN);
+        return account;
+    }
+
+    @Transactional
+    public Account close(UUID accountId, UUID callerid) {
+        Account account = accounts.findById(accountId).orElseThrow(() -> new AccountNotFoundException("No such account"));
+        if(!account.getOwnerUserId().equals(callerid)) {
+            throw new ForbiddenException("Cannot close another persons account");
+        }
+
+        account.setStatus(AccountStatus.CLOSED);
         return account;
     }
 }

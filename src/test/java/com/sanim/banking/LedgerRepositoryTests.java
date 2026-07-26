@@ -1,6 +1,7 @@
 package com.sanim.banking;
 
 import com.sanim.banking.domain.ledger.LedgerEntry;
+import com.sanim.banking.enums.CurrencyCode;
 import com.sanim.banking.repository.LedgerEntryRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class LedgerRepositoryTests {
                 transactionId(transactionId).
                 accountId(accountId).
                 amount(new BigDecimal("10.00")).
-                currencyCode("GBP").build();
+                currencyCode(CurrencyCode.GBP).build();
 
         ledger.save(entry);
 
@@ -48,13 +49,13 @@ class LedgerRepositoryTests {
                 transactionId(transactionId1).
                 accountId(accountId).
                 amount(new BigDecimal("20.00")).
-                currencyCode("GBP").build();
+                currencyCode(CurrencyCode.GBP).build();
 
         LedgerEntry entry2 = LedgerEntry.builder().
                 transactionId(transactionId2).
                 accountId(accountId).
                 amount(new BigDecimal("10.00")).
-                currencyCode("GBP").build();
+                currencyCode(CurrencyCode.GBP).build();
 
         ledger.save(entry1);
         ledger.save(entry2);

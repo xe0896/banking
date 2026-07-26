@@ -3,7 +3,8 @@ package com.sanim.banking.controller;
 import com.sanim.banking.domain.Money;
 import com.sanim.banking.domain.transaction.Transaction;
 import com.sanim.banking.dto.TransactionResponse;
-import com.sanim.banking.dto.WithdrawRequest;
+import com.sanim.banking.dto.TransactionRequest;
+import com.sanim.banking.dto.TransferRequest;
 import com.sanim.banking.service.AccountService;
 import com.sanim.banking.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +25,35 @@ public class TransactionController {
     // why it is in the header is because it is metadata
     @PostMapping("/withdraw/{id}")
     ResponseEntity<TransactionResponse> withdraw(@PathVariable UUID id, @RequestHeader("idom-key") String key,
-                                                 @RequestBody WithdrawRequest req, Authentication auth) {
+                                                 @RequestBody TransactionRequest req, Authentication auth) {
         UUID callerId = UUID.fromString(auth.getName());
-        Transaction transaction = transactions.withdraw(req.accountId(), callerId, req.amount(), req.userId(), key);
+        Transaction transaction = transactions.withdraw(id, callerId, req.amount(), req.userId(), key);
         Money newBalance = accounts.getBalance(req.accountId());
-        return ResponseEntity.status(201).body(toDto(transaction, newBalance));
+        return ResponseEntity.status(201).body
+                (new TransactionResponse(transaction.getId(), transaction.getStatus(), transaction.getCompletedAt(), newBalance));
     }
 
-    private TransactionResponse toDto(Transaction transaction, Money newBalance) {
-        return new TransactionResponse(transaction.getId(), transaction.getStatus(), transaction.getCompletedAt(), newBalance);
+    @PostMapping("/deposit/{id}")
+    ResponseEntity<TransactionResponse> deposit(@PathVariable UUID id, @RequestHeader("idom-key") String key,
+                                                @RequestBody TransactionRequest req, Authentication auth) {
+
+        UUID callerId = UUID.fromString(auth.getName());
+        Transaction transaction = transactions.deposit(id, callerId, req.amount(), key);
+        Money newBalance = accounts.getBalance(id);
+        return ResponseEntity.status(201).body
+                (new TransactionResponse(transaction.getId(), transaction.getStatus(), transaction.getCompletedAt(), newBalance));
     }
+
+    @PostMapping("/transfers")
+    ResponseEntity<TransactionResponse> transfer(@RequestHeader("idom-key") String key, @RequestBody TransferRequest req,
+                                                 Authentication auth) {
+        UUID callerId = UUID.fromString(auth.getName());
+        Transaction transaction = transactions.transfer(req.fromAccountId(), req.toAccountId(), req.amount(),
+                callerId, key);
+        Money newBalance = accounts.getBalance(req.fromAccountId());
+        return ResponseEntity.status(201).body
+                (new TransactionResponse(transaction.getId(), transaction.getStatus(), transaction.getCompletedAt(), newBalance));
+    }
+
+
 }

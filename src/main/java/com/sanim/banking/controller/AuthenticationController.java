@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,19 +63,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/me")
-    ResponseEntity<MeResponse> me(@RequestBody MeRequest req) {
-        String token = req.token();
-        SecretKey key = jwt.getKey();
-
+    ResponseEntity<MeResponse> me(Authentication auth) {
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-
-            UUID userId = UUID.fromString(claims.getSubject());
-            User u = users.getUserById(userId);
+            UUID callerId = UUID.fromString(auth.getName());
+            User u = users.getUserById(callerId);
 
             return ResponseEntity.status(HttpStatus.OK).
                     body(new MeResponse(u.getId(), u.getDisplayName(), u.getStatus(), u.getCreatedAt()));

@@ -6,6 +6,7 @@ import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.transaction.Transaction;
 import com.sanim.banking.domain.transaction.TransactionType;
 import com.sanim.banking.domain.user.User;
+import com.sanim.banking.enums.CurrencyCode;
 import com.sanim.banking.exception.InsufficientFundsException;
 import com.sanim.banking.repository.LedgerEntryRepository;
 import com.sanim.banking.service.AccountService;
@@ -66,11 +67,11 @@ public class TransactionRepositoryTests {
 
         UUID userId = u.getId();
 
-        Account account = accounts.openAccount(userId, AccountType.SAVINGS, "GBP");
-        String currencyCode = account.getCurrencyCode();
+        Account account = accounts.openAccount(userId, AccountType.SAVINGS, CurrencyCode.GBP);
+        CurrencyCode currencyCode = account.getCurrencyCode();
 
-        transactionService.deposit(account.getId(), Money.of("100.00", currencyCode), userId, "idom-1");
-        transactionService.deposit(account.getId(), Money.of("200.00", currencyCode), userId, "idom-2");
+        transactionService.deposit(account.getId(), userId, Money.of("100.00", currencyCode), "idom-1");
+        transactionService.deposit(account.getId(), userId, Money.of("200.00", currencyCode), "idom-2");
 
         BigDecimal sum = ledger.sumWholeLedger();
         // Sum of ledger should always be zero since system account balances it out for deposits/withdrawls
@@ -84,11 +85,11 @@ public class TransactionRepositoryTests {
 
         UUID userId = u.getId();
 
-        Account account = accounts.openAccount(userId, AccountType.SAVINGS, "GBP");
-        String currencyCode = account.getCurrencyCode();
+        Account account = accounts.openAccount(userId, AccountType.SAVINGS, CurrencyCode.GBP);
+        CurrencyCode currencyCode = account.getCurrencyCode();
 
-        transactionService.deposit(account.getId(), Money.of("100.00", currencyCode), userId, "idom-1");
-        transactionService.deposit(account.getId(), Money.of("200.00", currencyCode), userId, "idom-2");
+        transactionService.deposit(account.getId(), userId, Money.of("100.00", currencyCode), "idom-1");
+        transactionService.deposit(account.getId(), userId, Money.of("200.00", currencyCode), "idom-2");
 
         BigDecimal sum = ledger.sumWholeLedger();
         System.out.println("Sum: " + sum);
@@ -101,9 +102,9 @@ public class TransactionRepositoryTests {
         User u = User.builder().email("fake-email").displayName("display-name").passwordHash("password-hash").build();
         users.save(u);
 
-        Account account = accounts.openAccount(u.getId(), AccountType.CHECKING, "GBP");
+        Account account = accounts.openAccount(u.getId(), AccountType.CHECKING, CurrencyCode.GBP);
 
-        transactionService.deposit(account.getId(), Money.of("100.00", "GBP"), u.getId(), "idom-1");
+        transactionService.deposit(account.getId(), u.getId(), Money.of("100.00", CurrencyCode.GBP), "idom-1");
 
         System.out.println("Count: " + ledger.count());
 
@@ -111,8 +112,8 @@ public class TransactionRepositoryTests {
 
         // 1st param is the exception class we expect
         // 2nd param is the arrow function that we want to execute that should throw the exception
-        assertThrows(InsufficientFundsException.class, () -> transactionService.withdraw(account.getId(), account.getId(),
-                Money.of("200.00", "GBP"), u.getId(), "idom-2"));
+        assertThrows(InsufficientFundsException.class, () -> transactionService.withdraw(account.getId(), u.getId(),
+                Money.of("200.00", CurrencyCode.GBP), u.getId(), "idom-2"));
 
         assertEquals(prevCount, ledger.count());
     }

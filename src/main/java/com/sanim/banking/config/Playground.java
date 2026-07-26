@@ -26,21 +26,6 @@ public class Playground implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        var user = users.save(User.builder()
-                .email("alice@example.com")
-                .passwordHash("hash")
-                .displayName("Alice")
-                .build());
 
-        System.out.println("UserID: " + user.getId());
-
-        var acc = accounts.openAccount(user.getId(),
-                AccountType.CHECKING, "GBP");
-
-        transactions.deposit(acc.getId(), Money.of("100.00", "GBP"), user.getId(), "play-1");
-        transactions.deposit(acc.getId(), Money.of("100.00", "GBP"), user.getId(), "idom-1");
-        transactions.deposit(acc.getId(), Money.of("200.00", "GBP"), user.getId(), "idom-2");
-
-        System.out.println("balance: " + accounts.getBalance(acc.getId()));
     }
 }

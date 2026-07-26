@@ -5,6 +5,7 @@ import com.sanim.banking.domain.account.Account;
 import com.sanim.banking.domain.account.AccountStatus;
 import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.user.User;
+import com.sanim.banking.enums.CurrencyCode;
 import com.sanim.banking.repository.AccountRepository;
 import com.sanim.banking.repository.UserRepository;
 import com.sanim.banking.service.AccountService;
@@ -39,7 +40,7 @@ class AccountTests {
 
         UUID userId = u.getId();
 
-        Account account = accounts.openAccount(userId, AccountType.SAVINGS, "GBP");
+        Account account = accounts.openAccount(userId, AccountType.SAVINGS, CurrencyCode.GBP);
 
         boolean res = (account.getAccountNumberValue() != null) && (account.getStatus() == AccountStatus.OPEN);
         assertTrue(res);
@@ -52,8 +53,8 @@ class AccountTests {
 
         UUID userId = u.getId();
 
-        Account account = accounts.openAccount(userId, AccountType.SAVINGS, "GBP");
-        String currencyCode = account.getCurrencyCode();
+        Account account = accounts.openAccount(userId, AccountType.SAVINGS, CurrencyCode.GBP);
+        CurrencyCode currencyCode = account.getCurrencyCode();
 
         Money money = accounts.getBalance(account.getId());
 

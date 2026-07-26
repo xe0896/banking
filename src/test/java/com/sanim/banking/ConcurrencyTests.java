@@ -4,6 +4,7 @@ import com.sanim.banking.domain.Money;
 import com.sanim.banking.domain.account.Account;
 import com.sanim.banking.domain.account.AccountType;
 import com.sanim.banking.domain.user.User;
+import com.sanim.banking.enums.CurrencyCode;
 import com.sanim.banking.exception.InsufficientFundsException;
 import com.sanim.banking.repository.AccountRepository;
 import com.sanim.banking.repository.LedgerEntryRepository;
@@ -59,19 +60,19 @@ public class ConcurrencyTests {
         User u = User.builder().email("fake-email").displayName("display-name").passwordHash("password-hash").build();
         users.save(u);
 
-        Account account = accounts.openAccount(u.getId(), AccountType.CHECKING, "GBP");
+        Account account = accounts.openAccount(u.getId(), AccountType.CHECKING, CurrencyCode.GBP);
 
         ExecutorService service = Executors.newFixedThreadPool(10);
 
-        transactionService.deposit(account.getId(),
-                Money.of("100.00", "GBP"), u.getId(), String.valueOf(UUID.randomUUID()));
+        transactionService.deposit(account.getId(), u.getId(),
+                Money.of("100.00", CurrencyCode.GBP), String.valueOf(UUID.randomUUID()));
         for(int i = 0; i < 10; i++) {
             UUID accountId = account.getId();
             UUID userId = u.getId();
             service.execute(() -> {
                     try {
                         transactionService.withdraw(accountId, accountId,
-                                Money.of("20.00", "GBP"), userId, String.valueOf(UUID.randomUUID()));
+                                Money.of("20.00", CurrencyCode.GBP), userId, String.valueOf(UUID.randomUUID()));
 
                         succeeded.incrementAndGet();
                     } catch (InsufficientFundsException e) {
@@ -89,7 +90,7 @@ public class ConcurrencyTests {
         service.shutdown();
 
 
-        assertEquals(Money.zero("GBP").amount(), ledger.sumWholeLedger());
+        assertEquals(Money.zero(CurrencyCode.GBP).amount(), ledger.sumWholeLedger());
         assertEquals(5, succeeded.get());
         assertEquals(5, failed.get());
     }

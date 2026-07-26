@@ -1,6 +1,7 @@
 package com.sanim.banking.domain.ledger;
 
 import com.sanim.banking.domain.Money;
+import com.sanim.banking.enums.CurrencyCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,8 +35,9 @@ public class LedgerEntry {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String currencyCode;
+    private CurrencyCode currencyCode;
 
     @Column(nullable = false)
     private Instant postedAt;
@@ -46,6 +48,6 @@ public class LedgerEntry {
     }
 
     public Money money() {
-        return new Money(amount, Currency.getInstance(currencyCode));
+        return new Money(amount, currencyCode);
     }
 }

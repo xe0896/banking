@@ -1,5 +1,6 @@
 package com.sanim.banking.domain.account;
 
+import com.sanim.banking.enums.CurrencyCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,8 +34,9 @@ public class Account {
     @Column(nullable = false)
     private AccountType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 3)
-    private String currencyCode;
+    private CurrencyCode currencyCode;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

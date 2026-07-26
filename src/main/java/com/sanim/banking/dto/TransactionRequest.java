@@ -4,4 +4,4 @@ import com.sanim.banking.domain.Money;
 
 import java.util.UUID;
 
-public record WithdrawRequest(UUID accountId, Money amount, UUID userId) {}
+public record TransactionRequest(UUID accountId, Money amount, UUID userId) {}
